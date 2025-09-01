@@ -1,0 +1,12 @@
+{
+  "itemGroup.random_respawn_on_death": "Example Mod Tab",
+  "block.random_respawn_on_death.example_block": "Example Block",
+  "item.random_respawn_on_death.example_item": "Example Item",
+  "config.random_respawn_on_death.title": "Random Respawn on Death Config",
+  "config.random_respawn_on_death.respawn_distance": "Enter distance",
+  "config.random_respawn_on_death.respawn_distance_label": "Respawn Distance (blocks):",
+  "config.random_respawn_on_death.range_hint": "Enter a value between 100 and 10,000 blocks",
+  "config.random_respawn_on_death.save": "Save your changes",
+  "config.random_respawn_on_death.cancel": "Discard changes and close",
+  "config.random_respawn_on_death.reset_default": "Reset to default value (500 blocks)"
+}
