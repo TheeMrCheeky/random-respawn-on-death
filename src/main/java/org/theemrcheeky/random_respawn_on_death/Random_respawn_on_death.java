@@ -33,6 +33,9 @@ public class Random_respawn_on_death {
 
         // Register the death event handler
         NeoForge.EVENT_BUS.register(DeathEventHandler.class);
+        
+        // Register the death marker handler
+        NeoForge.EVENT_BUS.register(DeathMarkerHandler.class);
 
         // Register our mod's ModConfigSpec so that FML can create and load the config file for us
         modContainer.registerConfig(ModConfig.Type.COMMON, Config.SPEC);

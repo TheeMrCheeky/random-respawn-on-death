@@ -5,14 +5,14 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.level.Level;
 import net.neoforged.bus.api.SubscribeEvent;
-import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.event.entity.player.PlayerEvent;
+import net.neoforged.fml.common.EventBusSubscriber;
+import net.neoforged.neoforge.event.tick.ServerTickEvent;
 
 import java.util.Random;
 
 @EventBusSubscriber(modid = Random_respawn_on_death.MODID)
 public class DeathEventHandler {
-
     private static final Random random = new Random();
 
     @SubscribeEvent
@@ -28,7 +28,7 @@ public class DeathEventHandler {
             return;
         }
 
-        // Check if player has a respawn position set (bed, respawn anchor, etc.)
+        // Check if player has a respawn position set
         boolean hasSpawnPoint = player.getRespawnPosition() != null && player.getRespawnDimension() == Level.OVERWORLD;
 
         // If player is returning from End after defeating dragon, send them to their bed if they have one
@@ -36,12 +36,11 @@ public class DeathEventHandler {
             if (hasSpawnPoint) {
                 return; // Let vanilla handle bed spawn
             }
-            // If no bed, continue with random spawn
         } else if (hasSpawnPoint) {
             return; // Normal death with bed set - use bed spawn
         }
 
-        // Get the player's death position (stored as their last death location)
+        // Get the player's death position
         BlockPos deathPos = player.getLastDeathLocation().map(globalPos -> globalPos.pos()).orElse(player.blockPosition());
 
         // Calculate random respawn position within configured distance
@@ -50,84 +49,135 @@ public class DeathEventHandler {
         // Find a safe spawn location
         BlockPos safePos = findSafeSpawnLocation(level, randomPos);
 
+        // Create death marker at the death location
+        DeathMarkerManager.createMarker(player, deathPos);
+
         // Teleport player to the safe location
         player.teleportTo(level, safePos.getX() + 0.5, safePos.getY(), safePos.getZ() + 0.5, player.getYRot(), player.getXRot());
     }
 
+    @SubscribeEvent
+    public static void onServerTick(ServerTickEvent.Post event) {
+        // Update death markers for all players
+        for (ServerLevel serverLevel : event.getServer().getAllLevels()) {
+            for (ServerPlayer player : serverLevel.players()) {
+                DeathMarkerManager.updateMarkers(player);
+            }
+        }
+    }
+
     private static BlockPos getRandomRespawnPosition(BlockPos deathPos, int maxDistance) {
-        // Generate random angle
         double angle = random.nextDouble() * 2 * Math.PI;
-
-        // Generate random distance within the configured range
         int distance = 100 + random.nextInt(maxDistance - 100 + 1);
-
-        // Calculate new position
         int newX = deathPos.getX() + (int) (Math.cos(angle) * distance);
         int newZ = deathPos.getZ() + (int) (Math.sin(angle) * distance);
-
         return new BlockPos(newX, deathPos.getY(), newZ);
     }
 
     private static BlockPos findSafeSpawnLocation(ServerLevel level, BlockPos startPos) {
-        // Start from the highest block and work downward to find the surface
-        int surfaceY = findSurfaceLevel(level, startPos.getX(), startPos.getZ());
+        int surfaceY = findTrueSurfaceLevel(level, startPos.getX(), startPos.getZ());
 
         if (surfaceY != -1) {
             BlockPos surfacePos = new BlockPos(startPos.getX(), surfaceY, startPos.getZ());
-
-            // Verify it's a safe spawn location (solid block with air above)
-            if (level.getBlockState(surfacePos).isCollisionShapeFullBlock(level, surfacePos) && 
-                level.getBlockState(surfacePos.above()).isAir() && 
-                level.getBlockState(surfacePos.above(2)).isAir()) {
-
-                return surfacePos.above(); // Return the air block above the solid block
+            if (isSafeSpawnLocation(level, surfacePos)) {
+                return surfacePos.above();
             }
         }
 
-        // Fallback: try to find any surface-exposed safe location in a small area
-        for (int xOffset = -2; xOffset <= 2; xOffset++) {
-            for (int zOffset = -2; zOffset <= 2; zOffset++) {
-                int fallbackY = findSurfaceLevel(level, startPos.getX() + xOffset, startPos.getZ() + zOffset);
-                if (fallbackY != -1) {
-                    BlockPos fallbackPos = new BlockPos(startPos.getX() + xOffset, fallbackY, startPos.getZ() + zOffset);
-                    if (level.getBlockState(fallbackPos).isCollisionShapeFullBlock(level, fallbackPos) && 
-                        level.getBlockState(fallbackPos.above()).isAir() && 
-                        level.getBlockState(fallbackPos.above(2)).isAir()) {
-
-                        return fallbackPos.above();
+        // Search in expanding rings for a safe location
+        for (int radius = 1; radius <= 10; radius++) {
+            for (int xOffset = -radius; xOffset <= radius; xOffset++) {
+                for (int zOffset = -radius; zOffset <= radius; zOffset++) {
+                    // Skip positions we've already checked in smaller radii
+                    if (Math.abs(xOffset) < radius && Math.abs(zOffset) < radius) continue;
+                    
+                    int nearbyY = findTrueSurfaceLevel(level, startPos.getX() + xOffset, startPos.getZ() + zOffset);
+                    if (nearbyY != -1) {
+                        BlockPos nearbyPos = new BlockPos(startPos.getX() + xOffset, nearbyY, startPos.getZ() + zOffset);
+                        if (isSafeSpawnLocation(level, nearbyPos)) {
+                            return nearbyPos.above();
+                        }
                     }
                 }
             }
         }
 
-        // Ultimate fallback: spawn at world surface level
-        return new BlockPos(startPos.getX(), level.getSeaLevel() + 1, startPos.getZ());
+        // Ultimate fallback - find world spawn and go up from there
+        BlockPos worldSpawn = level.getSharedSpawnPos();
+        int spawnSurfaceY = findTrueSurfaceLevel(level, worldSpawn.getX(), worldSpawn.getZ());
+        if (spawnSurfaceY != -1) {
+            return new BlockPos(worldSpawn.getX(), spawnSurfaceY + 1, worldSpawn.getZ());
+        }
+
+        return new BlockPos(startPos.getX(), level.getSeaLevel() + 10, startPos.getZ()); // Last resort - spawn well above sea level
     }
 
-    private static int findSurfaceLevel(ServerLevel level, int x, int z) {
-        // Start from max build height and find the first solid block exposed to sky
-        for (int y = level.getMaxBuildHeight() - 1; y >= level.getSeaLevel(); y--) {
-            BlockPos checkPos = new BlockPos(x, y, z);
-
-            // Check if this block is solid and has sky access above it
-            if (level.getBlockState(checkPos).isCollisionShapeFullBlock(level, checkPos)) {
-                // Verify sky access - check if there's a clear path to the sky
-                if (hasDirectSkyAccess(level, checkPos.above())) {
-                    return y;
+    private static boolean isSafeSpawnLocation(ServerLevel level, BlockPos pos) {
+        // Check if there's a solid foundation
+        if (!level.getBlockState(pos).isCollisionShapeFullBlock(level, pos)) {
+            return false;
+        }
+        
+        // Check for 3 blocks of air space (head, body, and breathing room)
+        for (int i = 1; i <= 3; i++) {
+            if (!level.getBlockState(pos.above(i)).isAir()) {
+                return false;
+            }
+        }
+        
+        // Check if this location can see the sky (not in a cave)
+        if (!level.canSeeSky(pos.above())) {
+            return false;
+        }
+        
+        // Check for dangerous blocks nearby (lava, fire, etc.)
+        for (int xOffset = -1; xOffset <= 1; xOffset++) {
+            for (int zOffset = -1; zOffset <= 1; zOffset++) {
+                for (int yOffset = 0; yOffset <= 2; yOffset++) {
+                    BlockPos checkPos = pos.offset(xOffset, yOffset, zOffset);
+                    if (level.getBlockState(checkPos).getBlock().toString().contains("lava") ||
+                        level.getBlockState(checkPos).getBlock().toString().contains("fire") ||
+                        level.getBlockState(checkPos).getBlock().toString().contains("magma")) {
+                        return false;
+                    }
                 }
             }
         }
-        return -1; // No surface found
+        
+        return true;
     }
 
-    private static boolean hasDirectSkyAccess(ServerLevel level, BlockPos pos) {
-        // Check if there's a clear path to the sky (no solid blocks above)
-        for (int y = pos.getY(); y < level.getMaxBuildHeight(); y++) {
-            BlockPos checkPos = new BlockPos(pos.getX(), y, pos.getZ());
-            if (level.getBlockState(checkPos).isCollisionShapeFullBlock(level, checkPos)) {
-                return false; // Blocked by a solid block
+    private static int findTrueSurfaceLevel(ServerLevel level, int x, int z) {
+        int maxY = level.getMaxBuildHeight();
+        int minY = level.getMinBuildHeight();
+
+        // Start from the top and find the first solid block that can see the sky
+        for (int y = maxY; y >= minY; y--) {
+            BlockPos pos = new BlockPos(x, y, z);
+            if (level.getBlockState(pos).isCollisionShapeFullBlock(level, pos)) {
+                // Check if this block can see the sky (not underground)
+                if (level.canSeeSky(pos.above())) {
+                    // Make sure there's air above it
+                    if (level.getBlockState(pos.above()).isAir()) {
+                        // Double-check it's actually surface by ensuring we're not too deep
+                        int surfaceLevel = level.getHeight();
+                        if (y >= surfaceLevel - 20) { // Allow some variation for hills/mountains
+                            return y;
+                        }
+                    }
+                }
             }
         }
-        return true; // Clear path to sky
+        
+        // If no true surface found, try to find the highest solid block as fallback
+        for (int y = maxY; y >= minY; y--) {
+            BlockPos pos = new BlockPos(x, y, z);
+            if (level.getBlockState(pos).isCollisionShapeFullBlock(level, pos) &&
+                level.getBlockState(pos.above()).isAir()) {
+                return y;
+            }
+        }
+        
+        return -1;
     }
 }

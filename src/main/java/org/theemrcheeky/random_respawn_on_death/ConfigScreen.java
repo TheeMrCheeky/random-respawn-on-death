@@ -41,14 +41,23 @@ public class ConfigScreen extends Screen {
         final int startY = this.height / 4;
         
         // Create input field with label
-        this.addRenderableWidget(new net.minecraft.client.gui.components.StringWidget(
+        this.addRenderableWidget(new net.minecraft.client.gui.components.AbstractWidget(
             centerX - FIELD_WIDTH / 2, 
             startY + 5, 
             FIELD_WIDTH, 
             FIELD_HEIGHT,
-            Component.translatable("config.random_respawn_on_death.respawn_distance_label"),
-            this.font
-        ));
+            Component.translatable("config.random_respawn_on_death.respawn_distance_label")
+        ) {
+            @Override
+            protected void renderWidget(@javax.annotation.Nonnull GuiGraphics graphics, int mouseX, int mouseY, float partialTick) {
+                graphics.drawString(ConfigScreen.this.font, this.getMessage(), this.getX(), this.getY() + (this.height - 8) / 2, VALID_COLOR);
+            }
+
+            @Override
+            protected void updateWidgetNarration(@javax.annotation.Nonnull net.minecraft.client.gui.narration.NarrationElementOutput narrationElementOutput) {
+                this.defaultButtonNarrationText(narrationElementOutput);
+            }
+        });
         
         this.respawnDistanceField = new EditBox(
             this.font, 

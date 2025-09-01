@@ -1,11 +1,27 @@
-# Random Respawn On Death v1.0.0
+# Random Respawn On Death Changelog
 
-## Release Highlights
+## v1.0.2 - Enhanced Surface Safety
+### 🛡️ Improvements
+- **Enhanced surface detection**: Now uses sky visibility checks to ensure true surface spawning
+- **Expanded safety validation**: 3 blocks of air space instead of 2 for better clearance
+- **Danger zone detection**: Scans for lava, fire, and magma blocks in spawn area
+- **Improved search algorithm**: Expanding ring search (10x10 area) for better safe location finding
+- **Better fallback systems**: Multiple fallback options including world spawn and sea level+10
+
+### 🐛 Bug Fixes
+- Fixed issue where players could spawn in caves or under overhangs
+- Fixed insufficient air space causing suffocation on spawn
+- Improved surface level detection accuracy
+
+---
+
+## v1.0.0 - Initial Release
+### Release Highlights
 - Initial release for NeoForge 1.21.1
 - Fully configurable random respawn system
 - Seamless integration with Minecraft's respawn mechanics
 
-## Features
+### Features
 - Random respawn on death within configurable distance
 - Configurable minimum and maximum spawn distance
 - Respects bed spawn points (optional)
