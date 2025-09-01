@@ -1,0 +1,27 @@
+{
+  "parent": "random_respawn_on_death:first_death_marker",
+  "display": {
+    "icon": {
+      "item": "minecraft:skeleton_skull"
+    },
+    "title": {
+      "translate": "advancement.random_respawn_on_death.death_collector.title"
+    },
+    "description": {
+      "translate": "advancement.random_respawn_on_death.death_collector.description"
+    },
+    "frame": "goal",
+    "show_toast": true,
+    "announce_to_chat": true,
+    "hidden": false
+  },
+  "criteria": {
+    "collected_deaths": {
+      "trigger": "minecraft:location",
+      "conditions": {}
+    }
+  },
+  "rewards": {
+    "experience": 200
+  }
+}

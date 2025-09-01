@@ -1,5 +1,37 @@
 # Random Respawn On Death Changelog
 
+## v1.1.0 - Hardcore Mode & Achievement System 🎯
+### 🎊 Major Features Added
+- **Complete Achievement System**: Dedicated mod advancement tab with progressive challenges
+- **Temporary Hardcore Mode**: First death transforms survival worlds into hardcore until redemption
+- **Authentic Hardcore Hearts**: Visual hardcore heart display during cursed phase using advanced rendering
+- **Health Curse System**: First death reduces max health to 50% (5 hearts) with visual feedback
+- **Golden Apple Redemption**: Restore health and exit hardcore mode by eating golden apples
+- **Command Restriction**: Commands blocked during hardcore mode for authentic challenge
+- **World Difficulty Locking**: Automatically locks difficulty to Hard during cursed phase
+- **Immersive Visual Effects**: Actionbar messages, particle effects, and chat notifications
+- **Death Counter System**: Track deaths across achievements and progression
+
+### 🎯 Achievements Added
+- **First Death** - Die for the first time (Jack-o'-lantern icon)
+- **Curse Breaker** - Escape hardcore mode by restoring full health
+- **Death Collector** - Die multiple times (5+ deaths)
+- **Master of Fate** - Complete all other achievements
+
+### 🛠️ Technical Improvements
+- **Advanced Client-Side Rendering**: Sophisticated hardcore heart display using reflection
+- **Network Packet System**: Custom packets for client-server hardcore mode synchronization
+- **Enhanced Reflection System**: Comprehensive field detection for world modification
+- **Clean Code Architecture**: Modular design with proper event handling and state management
+
+### 🎮 How It Works
+1. **First Death**: Triggers achievement and activates temporary hardcore mode
+2. **Cursed Phase**: Health reduced, hardcore hearts visible, commands blocked, difficulty locked
+3. **Golden Apple Redemption**: Each golden apple restores 1 heart (need 5 to fully restore)
+4. **Mode Restoration**: Full health triggers automatic return to normal survival mode
+
+---
+
 ## v1.0.2 - Enhanced Surface Safety
 ### 🛡️ Improvements
 - **Enhanced surface detection**: Now uses sky visibility checks to ensure true surface spawning

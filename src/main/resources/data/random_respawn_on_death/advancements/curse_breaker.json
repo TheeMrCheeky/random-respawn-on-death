@@ -1,0 +1,27 @@
+{
+  "parent": "random_respawn_on_death:first_death_marker",
+  "display": {
+    "icon": {
+      "item": "minecraft:gold_block"
+    },
+    "title": {
+      "translate": "advancement.random_respawn_on_death.curse_breaker.title"
+    },
+    "description": {
+      "translate": "advancement.random_respawn_on_death.curse_breaker.description"
+    },
+    "frame": "task",
+    "show_toast": true,
+    "announce_to_chat": true,
+    "hidden": false
+  },
+  "criteria": {
+    "restored_health": {
+      "trigger": "minecraft:location",
+      "conditions": {}
+    }
+  },
+  "rewards": {
+    "experience": 50
+  }
+}

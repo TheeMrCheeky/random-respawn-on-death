@@ -1,0 +1,22 @@
+{
+  "display": {
+    "icon": {
+      "item": "minecraft:crafting_table"
+    },
+    "title": {
+      "translate": "advancement.random_respawn_on_death.root.title"
+    },
+    "description": {
+      "translate": "advancement.random_respawn_on_death.root.description"
+    },
+    "frame": "task",
+    "show_toast": false,
+    "announce_to_chat": false,
+    "hidden": false
+  },
+  "criteria": {
+    "first_death": {
+      "trigger": "minecraft:impossible"
+    }
+  }
+}

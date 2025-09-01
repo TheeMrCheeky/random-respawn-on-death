@@ -8,5 +8,15 @@
   "config.random_respawn_on_death.range_hint": "Enter a value between 100 and 10,000 blocks",
   "config.random_respawn_on_death.save": "Save your changes",
   "config.random_respawn_on_death.cancel": "Discard changes and close",
-  "config.random_respawn_on_death.reset_default": "Reset to default value (500 blocks)"
+  "config.random_respawn_on_death.reset_default": "Reset to default value (500 blocks)",
+  "advancement.random_respawn_on_death.root.title": "Random Respawn on Death",
+  "advancement.random_respawn_on_death.root.description": "Welcome to a world where death sends you somewhere unexpected!",
+  "advancement.random_respawn_on_death.first_death_marker.title": "Back to the Scene",
+  "advancement.random_respawn_on_death.first_death_marker.description": "Collect your first death marker by returning to where you died. WARNING: In survival mode, this will activate temporary hardcore mode until you restore your health!",
+  "advancement.random_respawn_on_death.curse_breaker.title": "Curse Breaker",
+  "advancement.random_respawn_on_death.curse_breaker.description": "Break the curse by eating your first golden apple",
+  "advancement.random_respawn_on_death.death_collector.title": "Death Collector",
+  "advancement.random_respawn_on_death.death_collector.description": "Die multiple times and collect the experience",
+  "advancement.random_respawn_on_death.master_of_fate.title": "Master of Fate",
+  "advancement.random_respawn_on_death.master_of_fate.description": "Master death itself and prove your resilience"
 }

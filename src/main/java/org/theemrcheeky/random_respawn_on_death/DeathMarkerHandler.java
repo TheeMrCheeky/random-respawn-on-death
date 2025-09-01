@@ -10,8 +10,18 @@ public class DeathMarkerHandler {
     @SubscribeEvent
     public static void onPlayerDeath(LivingDeathEvent event) {
         if (event.getEntity() instanceof ServerPlayer player) {
+            // Check if player is in temporary hardcore mode
+            if (ModAdvancements.isInTemporaryHardcoreMode(player)) {
+                // Handle hardcore death (sets to spectator mode)
+                ModAdvancements.handleHardcoreDeath(player);
+                return; // Don't create death marker for hardcore deaths
+            }
+            
             // Store death location for marker creation on respawn
             DeathMarkerManager.createMarker(player, player.blockPosition());
+            
+            // Increment death count for advancement tracking
+            ModAdvancements.incrementDeathCount(player);
         }
     }
 }

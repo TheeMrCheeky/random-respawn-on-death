@@ -13,7 +13,11 @@ import net.neoforged.fml.event.lifecycle.FMLCommonSetupEvent;
 import net.neoforged.neoforge.client.gui.IConfigScreenFactory;
 import net.neoforged.neoforge.common.NeoForge;
 import net.neoforged.neoforge.event.server.ServerStartingEvent;
+import net.neoforged.neoforge.network.event.RegisterPayloadHandlersEvent;
+import net.neoforged.neoforge.network.registration.PayloadRegistrar;
 import org.slf4j.Logger;
+import org.theemrcheeky.random_respawn_on_death.network.HardcoreModePacket;
+import org.theemrcheeky.random_respawn_on_death.network.ClientPacketHandler;
 
 // Random Respawn on Death mod - randomly respawns players in the overworld within a configurable distance
 @Mod(Random_respawn_on_death.MODID)
@@ -27,6 +31,9 @@ public class Random_respawn_on_death {
     public Random_respawn_on_death(IEventBus modEventBus, ModContainer modContainer) {
         // Register the commonSetup method for modloading
         modEventBus.addListener(this::commonSetup);
+        
+        // Register network packets
+        modEventBus.addListener(this::registerPayloads);
 
         // Register ourselves for server and other game events we are interested in
         NeoForge.EVENT_BUS.register(this);
@@ -46,7 +53,16 @@ public class Random_respawn_on_death {
 
     private void commonSetup(final FMLCommonSetupEvent event) {
         LOGGER.info("Random Respawn on Death mod initialized!");
-        LOGGER.info("Surface-only random respawn enabled with default distance: {} blocks", Config.respawnDistance);
+        LOGGER.info("Surface-only random respawn enabled with exact distance: {} blocks", Config.respawnDistance);
+    }
+    
+    private void registerPayloads(final RegisterPayloadHandlersEvent event) {
+        final PayloadRegistrar registrar = event.registrar("1.0");
+        registrar.playToClient(
+            HardcoreModePacket.TYPE,
+            HardcoreModePacket.STREAM_CODEC,
+            ClientPacketHandler::handleHardcoreModePacket
+        );
     }
 
     @SubscribeEvent

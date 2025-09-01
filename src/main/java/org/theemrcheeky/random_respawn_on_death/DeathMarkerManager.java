@@ -11,6 +11,12 @@ public class DeathMarkerManager {
     
     public static void createMarker(ServerPlayer player, BlockPos deathPos) {
         UUID playerId = player.getUUID();
+        
+        // Remove any existing marker for this player first
+        if (activeMarkers.containsKey(playerId)) {
+            activeMarkers.remove(playerId);
+        }
+        
         DeathMarker marker = new DeathMarker(deathPos, playerId);
         activeMarkers.put(playerId, marker);
     }
@@ -18,8 +24,12 @@ public class DeathMarkerManager {
     public static void updateMarkers(ServerPlayer player) {
         DeathMarker marker = activeMarkers.get(player.getUUID());
         if (marker != null) {
-            if (marker.isExpired()) {
+            if (marker.isReached(player)) {
+                // Player reached the death location - remove marker and grant advancement
                 activeMarkers.remove(player.getUUID());
+                
+                // Grant achievement for first death marker collection
+                ModAdvancements.grantFirstDeathMarkerAdvancement(player);
             } else {
                 marker.tick(player);
             }
@@ -32,5 +42,13 @@ public class DeathMarkerManager {
     
     public static boolean hasActiveMarker(UUID playerId) {
         return activeMarkers.containsKey(playerId);
+    }
+    
+    public static void clearAllMarkers() {
+        activeMarkers.clear();
+    }
+    
+    public static int getActiveMarkerCount() {
+        return activeMarkers.size();
     }
 }

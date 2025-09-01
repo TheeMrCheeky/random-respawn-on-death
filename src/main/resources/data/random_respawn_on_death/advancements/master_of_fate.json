@@ -1,0 +1,27 @@
+{
+  "parent": "random_respawn_on_death:death_collector",
+  "display": {
+    "icon": {
+      "item": "minecraft:diamond_block"
+    },
+    "title": {
+      "translate": "advancement.random_respawn_on_death.master_of_fate.title"
+    },
+    "description": {
+      "translate": "advancement.random_respawn_on_death.master_of_fate.description"
+    },
+    "frame": "challenge",
+    "show_toast": true,
+    "announce_to_chat": true,
+    "hidden": false
+  },
+  "criteria": {
+    "mastered_fate": {
+      "trigger": "minecraft:location",
+      "conditions": {}
+    }
+  },
+  "rewards": {
+    "experience": 500
+  }
+}

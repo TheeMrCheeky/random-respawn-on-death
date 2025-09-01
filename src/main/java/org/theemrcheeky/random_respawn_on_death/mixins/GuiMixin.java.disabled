@@ -1,0 +1,24 @@
+package org.theemrcheeky.random_respawn_on_death.mixins;
+
+import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.injection.At;
+import org.spongepowered.asm.mixin.injection.ModifyVariable;
+import net.minecraft.client.gui.Gui;
+import net.neoforged.api.distmarker.Dist;
+import net.neoforged.api.distmarker.OnlyIn;
+
+@OnlyIn(Dist.CLIENT)
+@Mixin(Gui.class)
+public class GuiMixin {
+    
+    private static boolean temporaryHardcoreMode = false;
+    
+    public static void setTemporaryHardcoreMode(boolean hardcore) {
+        temporaryHardcoreMode = hardcore;
+    }
+    
+    @ModifyVariable(method = "renderHearts", at = @At("HEAD"), argsOnly = true)
+    private boolean modifyHardcoreFlag(boolean hardcore) {
+        return hardcore || temporaryHardcoreMode;
+    }
+}

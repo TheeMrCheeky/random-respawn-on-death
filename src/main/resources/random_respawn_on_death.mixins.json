@@ -1,7 +1,7 @@
 {
   "required": true,
   "minVersion": "0.8",
-  "package": "org.theemrcheeky.random_respawn_on_death.mixin",
+  "package": "org.theemrcheeky.random_respawn_on_death.mixins",
   "compatibilityLevel": "JAVA_21",
   "mixins": [
   ],

@@ -12,7 +12,8 @@ public class Config {
 
     // Random respawn distance configuration with GUI-friendly settings
     public static final ModConfigSpec.IntValue RESPAWN_DISTANCE = BUILDER
-            .comment("Distance in blocks from death point to randomly respawn")
+            .comment("Exact distance in blocks from death point to randomly respawn")
+            .comment("Player will spawn at exactly this distance in a random direction")
             .comment("Minimum: 100 blocks, Maximum: 10000 blocks")
             .defineInRange("respawnDistance", 500, 100, 10000);
 

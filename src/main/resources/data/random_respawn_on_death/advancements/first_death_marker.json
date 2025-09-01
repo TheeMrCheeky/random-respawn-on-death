@@ -1,0 +1,26 @@
+{
+  "parent": "random_respawn_on_death:root",
+  "display": {
+    "icon": {
+      "item": "minecraft:jack_o_lantern"
+    },
+    "title": {
+      "translate": "advancement.random_respawn_on_death.first_death_marker.title"
+    },
+    "description": {
+      "translate": "advancement.random_respawn_on_death.first_death_marker.description"
+    },
+    "frame": "task",
+    "show_toast": true,
+    "announce_to_chat": true,
+    "hidden": false
+  },
+  "criteria": {
+    "collected_first_marker": {
+      "trigger": "minecraft:location"
+    }
+  },
+  "rewards": {
+    "experience": 100
+  }
+}

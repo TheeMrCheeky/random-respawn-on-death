@@ -43,7 +43,7 @@ public class DeathEventHandler {
         // Get the player's death position
         BlockPos deathPos = player.getLastDeathLocation().map(globalPos -> globalPos.pos()).orElse(player.blockPosition());
 
-        // Calculate random respawn position within configured distance
+        // Calculate random respawn position at exactly the configured distance
         BlockPos randomPos = getRandomRespawnPosition(deathPos, Config.respawnDistance);
 
         // Find a safe spawn location
@@ -66,11 +66,10 @@ public class DeathEventHandler {
         }
     }
 
-    private static BlockPos getRandomRespawnPosition(BlockPos deathPos, int maxDistance) {
+    private static BlockPos getRandomRespawnPosition(BlockPos deathPos, int exactDistance) {
         double angle = random.nextDouble() * 2 * Math.PI;
-        int distance = 100 + random.nextInt(maxDistance - 100 + 1);
-        int newX = deathPos.getX() + (int) (Math.cos(angle) * distance);
-        int newZ = deathPos.getZ() + (int) (Math.sin(angle) * distance);
+        int newX = deathPos.getX() + (int) (Math.cos(angle) * exactDistance);
+        int newZ = deathPos.getZ() + (int) (Math.sin(angle) * exactDistance);
         return new BlockPos(newX, deathPos.getY(), newZ);
     }
 
