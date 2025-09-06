@@ -124,6 +124,16 @@ All Rights Reserved
 3. Run `./gradlew build`
 4. Find the built jar in `build/libs`
 
+### Java requirement
+
+This project requires Java 21 to build and run the NeoForge toolchain. If your system's `JAVA_HOME` points to an older JDK (for example, Java 17), Gradle will still work but the toolchain needs a JDK 21 installation available. You can install Eclipse Adoptium Temurin 21 on Windows via winget:
+
+```powershell
+winget install -e --id EclipseAdoptium.Temurin.21.JDK
+```
+
+Or download and install from: https://adoptium.net/
+
 ### Dependencies
 
 - Minecraft 1.21.1

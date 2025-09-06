@@ -13,6 +13,11 @@ group = mod_group_id
 
 repositories {
     mavenCentral()
+    // Required for some Minecraft artifacts
+    maven {
+        name = 'Minecraft Libraries'
+        url = 'https://libraries.minecraft.net/'
+    }
     maven {
         name = 'NeoForged'
         url = 'https://maven.neoforged.net/releases/'
@@ -22,6 +27,23 @@ repositories {
         url = 'https://maven.neoforged.net/snapshots/'
     }
     mavenLocal()
+}
+
+// Create a dedicated runtime jar for the mod and ensure it's produced by assemble.
+// This packages compiled classes and processed resources into a standard jar in build/libs.
+tasks.register('runtimeJar', Jar) {
+    dependsOn classes
+    dependsOn processResources
+    from sourceSets.main.output
+    // Use the project properties for a canonical artifact name
+    archiveBaseName = project.hasProperty('mod_id') ? project.mod_id : 'mod'
+    archiveVersion = project.hasProperty('mod_version') ? project.mod_version : project.version
+    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+}
+
+// Ensure assemble builds the runtime jar
+tasks.named('assemble') {
+    dependsOn tasks.named('runtimeJar')
 }
 
 base {
@@ -34,6 +56,33 @@ java {
     }
     withSourcesJar()
     withJavadocJar()
+}
+
+// Ensure dependency variant selection prefers Java 17 artifacts
+import org.gradle.api.attributes.Attribute
+
+configurations.all {
+    // Ensure Gradle requests artifacts compatible with JVM runtime 21 so
+    // published NeoForge/neoform variants compiled for Java 21 are selected.
+    // This aligns variant selection with the toolchain configured above.
+    attributes.attribute(org.gradle.api.attributes.Attribute.of('org.gradle.jvm.version', Integer), 21)
+
+    // Force older, Java-17-compatible NeoForge / neoform artifacts as a safe
+    // fallback. Adjust versions if you find a different candidate in the
+    // NeoForged index that better fits your environment.
+    resolutionStrategy {
+        // Pin the neoforge platform to the version declared in gradle.properties if set,
+        // otherwise fall back to 21.1.150 which is known to be older than the 21.1.206
+        // artifacts that require Java 21.
+        if (project.hasProperty('neo_version')) {
+            force "net.neoforged:neoforge:${project.neo_version}"
+        } else {
+            force 'net.neoforged:neoforge:21.1.150'
+        }
+
+        // Additionally force an older neoform runtime that historically targeted Java 17.
+        force 'net.neoforged:neoform:1.21-20240613.152323'
+    }
 }
 
 // Configure source compatibility for Java
@@ -115,33 +164,28 @@ test {
 }
 
 // Add development-time resources
+// Precompute replacement properties to avoid referencing Gradle script objects from inside closures
+def replaceProperties = [
+    'version'                 : project.version,
+    'minecraft_version'       : project.findProperty('minecraft_version'),
+    'minecraft_version_range' : project.findProperty('minecraft_version_range'),
+    'neo_version'             : project.findProperty('neo_version'),
+    'neo_version_range'       : project.findProperty('neo_version_range'),
+    'loader_version_range'    : project.findProperty('loader_version_range'),
+    'mod_id'                  : project.findProperty('mod_id'),
+    'mod_name'                : project.findProperty('mod_name'),
+    'mod_license'             : project.findProperty('mod_license'),
+    'mod_version'             : project.findProperty('mod_version'),
+    'mod_authors'             : project.findProperty('mod_authors'),
+    'mod_description'         : project.findProperty('mod_description')
+]
+
 processResources {
-    inputs.property "version", project.version
-    inputs.property "minecraft_version", minecraft_version
-    inputs.property "minecraft_version_range", minecraft_version_range
-    inputs.property "neo_version", neo_version
-    inputs.property "neo_version_range", neo_version_range
-    inputs.property "loader_version_range", loader_version_range
-    inputs.property "mod_id", mod_id
-    inputs.property "mod_name", mod_name
-    inputs.property "mod_license", mod_license
-    inputs.property "mod_version", mod_version
-    inputs.property "mod_authors", mod_authors
-    inputs.property "mod_description", mod_description
+    // Register inputs using the precomputed map so closures don't capture Gradle script objects
+    replaceProperties.each { k, v -> inputs.property(k, v) }
 
     filesMatching('META-INF/mods.toml') {
-        expand 'version': project.version,
-               'minecraft_version': minecraft_version,
-               'minecraft_version_range': minecraft_version_range,
-               'neo_version': neo_version,
-               'neo_version_range': neo_version_range,
-               'loader_version_range': loader_version_range,
-               'mod_id': mod_id,
-               'mod_name': mod_name,
-               'mod_license': mod_license,
-               'mod_version': mod_version,
-               'mod_authors': mod_authors,
-               'mod_description': mod_description
+        expand replaceProperties
     }
 }
 
@@ -154,23 +198,16 @@ dependencies {
     annotationProcessor 'org.spongepowered:mixin:0.8.5:processor'
 }
 
-// This block of code expands all declared replace properties in the specified resource targets.
-var generateModMetadata = tasks.register("generateModMetadata", ProcessResources) {
-    var replaceProperties = [minecraft_version      : minecraft_version,
-                             minecraft_version_range: minecraft_version_range,
-                             neo_version            : neo_version,
-                             neo_version_range      : neo_version_range,
-                             loader_version_range   : loader_version_range,
-                             mod_id                 : mod_id,
-                             mod_name               : mod_name,
-                             mod_license            : mod_license,
-                             mod_version            : mod_version,
-                             mod_authors            : mod_authors,
-                             mod_description        : mod_description]
-    inputs.properties replaceProperties
-    expand replaceProperties
-    from "src/main/templates"
-    into "build/generated/sources/modMetadata"
+// This block generates mod metadata using the precomputed replaceProperties map
+// so we don't redeclare variables or capture Gradle script objects inside closures.
+def generateModMetadata = tasks.register("generateModMetadata", ProcessResources) {
+    // Declare the task inputs explicitly using the precomputed map
+    inputs.properties(replaceProperties)
+
+    // Copy and expand the templates into the generated sources directory
+    from("src/main/templates")
+    into(layout.buildDirectory.dir("generated/sources/modMetadata"))
+    expand(replaceProperties)
 }
 
 // Include the output of "generateModMetadata" as an input directory for the build
@@ -205,8 +242,8 @@ curseforge {
     project {
         id = project.curseforge_project_id
         releaseType = 'release'
-        addGameVersion '1.21.1'
-        addGameVersion 'Java 21'
+    addGameVersion '1.21.1'
+    addGameVersion 'Java 17'
         addGameVersion 'NeoForge'
         mainArtifact(jar) {
             displayName = "Random Respawn On Death v${version}"
